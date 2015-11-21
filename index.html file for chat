@@ -1,0 +1,104 @@
+<html>
+<head>
+	<title>Simple Node JS and Socket IO Chat</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+  		var socket = io.connect('http://localhost:5432');
+  		
+		// add a new chat message
+		socket.on('add_message', function (name, data) {
+			$('#conversation_box').append('<b>'+name + ':</b> ' + data + '<br>');
+		});
+
+		// update user list
+		socket.on('update_users', function(names, emails) {
+			$('#users').empty();
+			$.each(names, function(key, value) {
+				$('#users').append('<div>' + value + ' (' + emails[key] + ')</div>');
+			});
+		});
+		
+		// update user count
+		socket.on('update_user_count', function(num) {
+			console.log(num);
+			$('#user_count').html(num);
+		});
+
+
+		$(document).ready(function(){
+			
+			// user clicks submit button
+			$('#send_message').click( function() {
+				
+				var message = $('#message').val();
+				
+				$('#message').val('');
+				$('#message').focus();
+				// send message to the server
+				socket.emit('send_message', message);
+			});
+			
+			
+			// User clicks the enter_chat button
+			$('#enter_chat').click(function(){
+				// emit the new_user function passing it the value of the name and email textbox if they are not empty
+				if($('#email').val() != "" && $('#name').val() != ""){
+					socket.emit('new_user', $('#name').val(), $('#email').val());
+					$('#new_user').fadeOut('fast', function(){
+						$('#chat').fadeIn();
+					});
+				} else {
+					alert("Please enter a valid Name and Email");
+				}
+			});
+	
+			// user hits enter in the message textbox
+			$('#message').keypress(function(e) {
+				if(e.which == 13) {
+					$(this).blur();
+					$('#send_message').focus().click();
+				}
+			});
+			
+			// user hits enter in email field
+			$('#email').keypress(function(e) {
+				if(e.which == 13) {
+					$(this).blur();
+					$('#enter_chat').focus().click();
+				}
+			});
+
+			
+			
+		});
+    </script>
+</head>
+<body>
+
+	<div id="new_user" style="display:none">
+		<input type="text" id="name" value="name" />
+		<input type="email" id="email" value="email" />
+		<input type="button" id="enter_chat" value="enter the chat" />
+	</div>
+
+	<h1 style="margin:10px;">Welcome to the Simple Chat App</h1>
+
+	<div id="chat" style="display:block">
+		
+		<div id="conversation_box" style="float:left; width:500px; height:400px; border:1px solid #ccc; display:block; padding:10px; margin:10px;">hello there...</div>
+		
+		<div id="user_list" style="float:left; width:300px; height:400px; padding:10px; border:1px solid #ccc; margin:10px;">
+			<b>USERS (<span id="user_count">0</span>)</b>
+			<div id="users"></div>
+			
+		</div>
+		
+		<div style="clear:both"></div>
+		
+		<input id="message" type="text" value="" style="margin:10px; padding:10px; font-size:16px;"  />
+		<input type="button" id="send_message" value="Submit" style="margin:10px; font-size:16px; padding:10px; border:0px; background:#ccc" />
+	</div>
+	
+</body>
+</html>
